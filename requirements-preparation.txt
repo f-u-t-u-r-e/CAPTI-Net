@@ -1,0 +1,4 @@
+# Separate Python 3.10 environment, for public-table cleaning and RF features.
+numpy==1.26.4
+rdkit==2026.9.1
+pandas==2.2.3

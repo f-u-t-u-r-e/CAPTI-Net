@@ -1,0 +1,32 @@
+{
+  "datasets": [
+    "tox21",
+    "toxcast"
+  ],
+  "seeds": [
+    13,
+    23,
+    37,
+    53,
+    71
+  ],
+  "rf_probability_weight": 0.5,
+  "backbone": {
+    "implementation": "chemprop==1.6.1",
+    "width": 300,
+    "depth": 3,
+    "dropout": 0.0,
+    "max_lr": 0.001,
+    "batch_size": 128,
+    "epochs": 80,
+    "patience": 25
+  },
+  "forest": {
+    "n_estimators": 400,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "class_weight": "balanced_subsample"
+  },
+  "chemical_feature_rdkit": "2024.09.6",
+  "preparation_and_rf_feature_rdkit": "2026.09.1"
+}
