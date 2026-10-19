@@ -2,6 +2,13 @@
 import numpy as np
 
 def metrics(y,p):
+    y=np.asarray(y);p=np.asarray(p)
+    if y.ndim!=2 or y.shape!=p.shape or np.isinf(y).any():
+        raise ValueError('Labels and probabilities must be matching matrices; missing labels use NaN.')
+    if not np.isin(y[np.isfinite(y)],[0,1]).all():
+        raise ValueError('Observed labels must be 0 or 1.')
+    if not np.isfinite(p).all() or np.any((p<0)|(p>1)):
+        raise ValueError('Predictions must be finite probabilities in [0,1].')
     ap=[];auc=[];eligible=[];per=[]
     for t in range(y.shape[1]):
         mask=np.isfinite(y[:,t]);yt=y[mask,t];pt=p[mask,t]

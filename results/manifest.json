@@ -1,0 +1,15 @@
+{
+  "snapshot_date": "2026-10-19",
+  "prediction_mode": "standalone",
+  "evaluation": "five existing scaffold partitions; mean and sample SD",
+  "files": {
+    "assay_means.csv": "f15be68b985bbcfe004e2df44957f36abb94df03e2b23046625ff8dd2ef81a96",
+    "external_herg.csv": "33958217117344191d8ee6c1c7ff3872eb1f9b78adfc3074a796384f1af31d43",
+    "partition_scores.csv": "9ce416d0fc08e00af517b05c40d71eaa497287e2606210660ecb971aac339ace",
+    "pathway_removal.csv": "17a34aa7a76b7cdcc570b3602d8b7fdeea38b86b55250d70fcd365dac798e4d5",
+    "similarity_per_seed.csv": "37175c665a89d6523014ba6489b5da8037a6d0da5bef6993c475879bb5447386",
+    "single_pathways.csv": "877fbef6688a249a499a3afeb8f4e45d66824f557ccb256f7fee941392e863cc",
+    "table1.csv": "98e78291847873cc03969a06910e105fb5eca2d288e33d719bd8606e921d4941",
+    "validation_controls.csv": "9cd66d9fae4087d25a72d491329b5ace41fc97640f6c4c9ef4687034bb5ebfc8"
+  }
+}

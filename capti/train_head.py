@@ -1,4 +1,4 @@
-"""Fit the two-branch correction with a frozen, partition-matched graph base."""
+"""Fit chemical pathways and their shared head with partition-matched graph logits."""
 import argparse
 import copy
 import random
@@ -11,6 +11,7 @@ from .io import read_json, write_json, fresh_dir, load_features, load_split, ali
 from .model import CAPTI, masked_loss
 from .preprocessing import fit_topology, transform
 from .metrics import metrics
+from .variants import VARIANTS, variant_config
 
 def fit(features, split_path, base_path, tasks, config, seed, output,
         device='cuda', legacy_layout=False):
@@ -31,6 +32,16 @@ def fit(features, split_path, base_path, tasks, config, seed, output,
     with np.load(base_path, allow_pickle=False) as z:
         if 'train_ids' not in z or not np.array_equal(z['train_ids'], s['train']):
             raise ValueError('Graph cache must identify exactly the same training indices.')
+    provenance = None
+    sidecar = Path(str(base_path) + '.json')
+    if sidecar.exists():
+        provenance = read_json(sidecar)
+        if provenance.get('cache_sha256') != sha256(base_path):
+            raise ValueError('Graph-cache sidecar does not match the supplied cache.')
+        if not provenance.get('checkpoint_sha256'):
+            raise ValueError('Graph-cache sidecar must identify its checkpoint.')
+    if config.get('base_scale', .5) == 0:
+        base_np = np.zeros_like(base_np)
     if not np.isfinite(s['y_train']).any():
         raise ValueError('No observed training labels.')
     stats = fit_topology(f['topology'], s['train'])
@@ -85,7 +96,10 @@ def fit(features, split_path, base_path, tasks, config, seed, output,
     p = prediction()
     obj = {'state': {k: v.detach().cpu() for k, v in saved.items()},
            'config': config, 'stats': stats, 'tasks': len(tasks), 'task_names': list(tasks),
-           'seed': seed, 'legacy_input_layout': legacy_layout}
+           'seed': seed, 'legacy_input_layout': legacy_layout,
+           'train_ids': tr.tolist(), 'prediction_mode': 'standalone_neural'}
+    if provenance is not None:
+        obj['graph_checkpoint_sha256'] = provenance['checkpoint_sha256']
     torch.save(obj, out / 'head.pt')
     np.savez_compressed(out / 'validation_predictions.npz', ids=va, p=p,
                         smiles=f['smiles'][va], tasks=np.asarray(tasks))
@@ -105,6 +119,7 @@ def main():
     p.add_argument('--base', required=True)
     p.add_argument('--molecules', required=True, help='JSON containing ordered task names.')
     p.add_argument('--config', default='configs/default.json')
+    p.add_argument('--variant', choices=list(VARIANTS), default='full')
     p.add_argument('--seed', type=int, required=True)
     p.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
     p.add_argument('--output', required=True)
@@ -112,7 +127,7 @@ def main():
     molecules = read_json(a.molecules)
     if load_features(a.features)['smiles'].tolist() != molecules['smiles']:
         raise ValueError('Chemical feature rows differ from molecules.json.')
-    r = fit(a.features,a.split,a.base,molecules['tasks'],read_json(a.config),
+    r = fit(a.features,a.split,a.base,molecules['tasks'],variant_config(read_json(a.config), a.variant),
             a.seed,a.output,a.device)
     print('Saved:', a.output, 'best epoch:', r['best_epoch'])
 

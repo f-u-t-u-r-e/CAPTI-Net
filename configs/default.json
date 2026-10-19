@@ -5,5 +5,9 @@
   "wd": 0.01,
   "dropout": 0.5,
   "epochs": 250,
-  "patience": 50
+  "patience": 50,
+  "i1": true,
+  "i2": true,
+  "product_i1": true,
+  "product_i2": true
 }

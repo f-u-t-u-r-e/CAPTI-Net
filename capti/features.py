@@ -1,5 +1,6 @@
 """Two chemical views; feature generation does not read labels."""
 import argparse
+import hashlib
 from pathlib import Path
 import numpy as np
 from rdkit import Chem, RDConfig, rdBase
@@ -12,17 +13,23 @@ PAIR_INDEX = {p:i for i,p in enumerate(PAIRS)}
 FDEF = Path(RDConfig.RDDataDir)/'BaseFeatures.fdef'
 EXPECTED_FDEF = '87ab54bd717af50a78a710d23e7737a2cafc96e5293bf6257ecdda86b6da3f65'
 
+def definition_sha256(path=FDEF):
+    # The official Windows wheel uses CRLF for the identical feature definition.
+    # Normalize only line endings, retaining every chemical definition and byte otherwise.
+    return hashlib.sha256(Path(path).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+
 def check_environment():
     if rdBase.rdkitVersion != '2024.09.6':
         raise RuntimeError('Chemical branches require RDKit 2024.09.6. Use the core environment.')
-    if sha256(FDEF) != EXPECTED_FDEF:
+    if definition_sha256(FDEF) != EXPECTED_FDEF:
         raise RuntimeError('BaseFeatures.fdef mismatch; check RDBASE and RDKit installation.')
 
 class ChemicalFeatures:
     def __init__(self):
         check_environment()
         from rdkit.Chem import ChemicalFeatures as CF
-        self.factory = CF.BuildFeatureFactory(str(FDEF))
+        # Python handles Unicode installation paths; RDKit receives the verified text.
+        self.factory = CF.BuildFeatureFactoryFromString(FDEF.read_text(encoding='utf-8'))
         self.generator = rdFingerprintGenerator.GetMorganGenerator(radius=2,fpSize=2048,includeChirality=True)
 
     def one(self, smiles):
@@ -65,7 +72,8 @@ def main():
     count,topology=ChemicalFeatures().transform(smiles)
     out.parent.mkdir(parents=True,exist_ok=True)
     np.savez_compressed(out,count=count,topology=topology,smiles=np.asarray(smiles))
-    write_json(str(out)+'.json',{'rdkit':rdBase.rdkitVersion,'fdef_sha256':sha256(FDEF),
+    write_json(str(out)+'.json',{'rdkit':rdBase.rdkitVersion,'fdef_sha256':definition_sha256(FDEF),
+        'fdef_raw_sha256':sha256(FDEF),
         'molecules_sha256':sha256(a.molecules),'cache_sha256':sha256(out),'rows':len(smiles)})
 
 if __name__=='__main__': main()

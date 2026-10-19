@@ -77,7 +77,7 @@ def main():
     p.add_argument('--dataset',choices=['tox21','toxcast'],required=True)
     p.add_argument('--output',required=True)
     a=p.parse_args()
-    if rdBase.rdkitVersion!='2026.09.1': raise RuntimeError('Use the preparation/RF environment with RDKit 2026.09.1.')
+    if rdBase.rdkitVersion!='2026.09.1': raise RuntimeError('Use the data-preparation environment with RDKit 2026.09.1.')
     smiles,y,scaffolds,_,tasks,meta=clean(a.raw,a.dataset)
     assets=Path(__file__).resolve().parent.parent/'assets'
     reference=read_json(assets/f'{a.dataset}_molecules.json')
